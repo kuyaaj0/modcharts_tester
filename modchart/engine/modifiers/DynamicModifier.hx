@@ -1,93 +1,87 @@
 package modchart.engine.modifiers;
 
+import modchart.ManagerLua;
+import modchart.backend.math.Vector3;
+import modchart.backend.core.ModifierParameters;
+import modchart.backend.core.VisualParameters;
+
 /**
- * `DynamicModifier` is a subclass of `Modifier` that applies dynamic transformations
- * to the position and visuals of an arrow during the modchart rendering process.
- *
- * This type of modifier can be used for scripting, allowing you to define
- * custom functions to modify both the position and visuals of arrows
- * without the need to modify the source code.
+ * DynamicModifier now supports Lua-based modifiers.
+ * You can assign a `luaName` to run Lua functions for both render and visuals.
  */
 #if !openfl_debug
 @:fileXml('tags="haxe,release"')
 @:noDebug
 #end
 class DynamicModifier extends Modifier {
-	/**
-	 * A function that applies a transformation to the arrow's position.
-	 *
-	 * @param position The current position of the arrow.
-	 * @param params The parameters used for rendering, such as song position, beat, etc.
-	 * @return The transformed position of the arrow.
-	 */
-	public var renderFunc:(Vector3, ModifierParameters) -> Vector3;
+    /** Optional Lua modifier name */
+    public var luaName:String;
 
-	/**
-	 * A function that applies transformations to the arrow's visuals.
-	 *
-	 * @param data The current visuals of the arrow.
-	 * @param params The parameters used for rendering, such as song position, beat, etc.
-	 * @return The transformed visuals of the arrow.
-	 */
-	public var visualsFunc:(VisualParameters, ModifierParameters) -> VisualParameters;
+    /** Functions for Haxe-side modifiers */
+    public var renderFunc:(Vector3, ModifierParameters) -> Vector3;
+    public var visualsFunc:(VisualParameters, ModifierParameters) -> VisualParameters;
 
-	/**
-	 * Flag that enables or disables null safety. When enabled, the parameters are copied
-	 * to avoid modifying the original data. This ensures that if the functions return `null`,
-	 * the original values will not be altered, preventing unintended changes.
-	 */
-	public var nullSafety:Bool = true;
+    public var nullSafety:Bool = true;
+    private var __skipRender:Bool = false;
+    private var __skipVisuals:Bool = false;
 
-	private var __skipRender:Bool = false;
-	private var __skipVisuals:Bool = false;
+    override public function render(position:Vector3, params:ModifierParameters):Vector3 {
+        if (__skipRender) return position;
 
-	/**
-	 * Applies the position transformation defined by `renderFunc`.
-	 * If `renderFunc` is `null`, the function simply returns the current position.
-	 *
-	 * @return The transformed position, or the original if no transformation is applied.
-	 */
-	override public function render(position:Vector3, params:ModifierParameters) {
-		if (__skipRender || renderFunc == null)
-			return position;
+        var pos = nullSafety ? position.clone() : position;
 
-		final safePos = nullSafety ? position.clone() : position;
-		final safeParams = nullSafety ? Reflect.copy(params) : params;
+        // Haxe-side render
+        if (renderFunc != null) {
+            var safeParams = nullSafety ? Reflect.copy(params) : params;
+            var translation = renderFunc(pos, safeParams);
+            if (nullSafety && translation == null) {
+                trace('[DynamicModifier] Haxe render failed!');
+                __skipRender = true;
+            } else if (translation != null) pos = translation;
+        }
 
-		final translation:Null<Vector3> = renderFunc(safePos, safeParams);
+        // Lua-side render
+        if (luaName != null) {
+            try {
+                pos = ManagerLua.runRender(luaName, pos, params);
+            } catch (e:Dynamic) {
+                trace('[DynamicModifier] Lua render failed for ' + luaName + ': ' + e);
+                __skipRender = true;
+            }
+        }
 
-		if (nullSafety && translation == null) {
-			trace('[FunkinModchart::DynamicModifier] Failed to run "render" function!');
-			__skipRender = true;
-		}
+        return pos;
+    }
 
-		return translation != null ? translation : position;
-	}
+    override public function visuals(data:VisualParameters, params:ModifierParameters):VisualParameters {
+        if (__skipVisuals) return data;
 
-	/**
-	 * Applies the visual transformation defined by `visualsFunc`.
-	 * If `visualsFunc` is `null`, the function simply returns the original visuals.
-	 *
-	 * @return The transformed visuals, or the original if no transformation is applied.
-	 */
-	override public function visuals(data:VisualParameters, params:ModifierParameters) {
-		if (__skipVisuals || visualsFunc == null)
-			return data;
+        var vis = nullSafety ? Reflect.copy(data) : data;
 
-		final safeData = nullSafety ? Reflect.copy(data) : data;
-		final safeParams = nullSafety ? Reflect.copy(params) : params;
+        // Haxe-side visuals
+        if (visualsFunc != null) {
+            var safeParams = nullSafety ? Reflect.copy(params) : params;
+            var modified = visualsFunc(vis, safeParams);
+            if (nullSafety && modified == null) {
+                trace('[DynamicModifier] Haxe visuals failed!');
+                __skipVisuals = true;
+            } else if (modified != null) vis = modified;
+        }
 
-		final modifiedVisuals:Null<VisualParameters> = visualsFunc(safeData, safeParams);
+        // Lua-side visuals
+        if (luaName != null) {
+            try {
+                vis = ManagerLua.runVisuals(luaName, vis, params);
+            } catch (e:Dynamic) {
+                trace('[DynamicModifier] Lua visuals failed for ' + luaName + ': ' + e);
+                __skipVisuals = true;
+            }
+        }
 
-		if (nullSafety && modifiedVisuals == null) {
-			trace('[FunkinModchart::DynamicModifier] Failed to run "visuals" function!');
-			__skipVisuals = true;
-		}
+        return vis;
+    }
 
-		return modifiedVisuals != null ? modifiedVisuals : data;
-	}
-
-	override public function shouldRun(params:ModifierParameters):Bool {
-		return true;
-	}
+    override public function shouldRun(params:ModifierParameters):Bool {
+        return true;
+    }
 }
