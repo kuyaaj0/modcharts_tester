@@ -1,14 +1,17 @@
 package modchart;
 
 import haxe.ds.StringMap;
-import modchart.backend.math.Vector3; // ✅ Correct import
+import modchart.backend.math.Vector3;
 import modchart.backend.core.VisualParameters;
 import modchart.backend.core.ModifierParameters;
+import modchart.engine.modifiers.Modifier;
+import modchart.Manager;
+import flixel.util.FlxEase.EaseFunction;
 
 /**
  * ManagerLua is the bridge between Lua scripts and the modchart system.
- * It allows Lua to register custom modifiers that affect arrow positions
- * and visuals during gameplay.
+ * It allows Lua to register custom modifiers that affect arrow positions,
+ * visuals, and call Manager functions from Lua.
  */
 class ManagerLua {
     // Stores Lua modifier functions
@@ -70,5 +73,61 @@ class ManagerLua {
             trace("[ManagerLua] Error in Lua visuals '" + name + "': " + e);
             return visuals;
         }
+    }
+
+    // ===========================
+    // Expose Haxe Manager functions to Lua
+    // ===========================
+
+    public static function addModifier(name:String, field:Int = -1) {
+        Manager.instance.addModifier(name, field);
+    }
+
+    public static function addScriptedModifier(name:String, instance:Dynamic, field:Int = -1) {
+        Manager.instance.addScriptedModifier(name, cast(instance, Modifier), field);
+    }
+
+    public static function setPercent(name:String, value:Float, player:Int = -1, field:Int = -1) {
+        Manager.instance.setPercent(name, value, player, field);
+    }
+
+    public static function getPercent(name:String, player:Int = 0, field:Int = 0):Float {
+        return Manager.instance.getPercent(name, player, field);
+    }
+
+    public static function addEvent(event:Dynamic, field:Int = -1) {
+        Manager.instance.addEvent(event, field);
+    }
+
+    public static function set(name:String, beat:Float, value:Float, player:Int = -1, field:Int = -1) {
+        Manager.instance.set(name, beat, value, player, field);
+    }
+
+    public static function ease(name:String, beat:Float, length:Float, value:Float = 1, easeFunc:EaseFunction, player:Int = -1, field:Int = -1) {
+        Manager.instance.ease(name, beat, length, value, easeFunc, player, field);
+    }
+
+    public static function add(name:String, beat:Float, length:Float, value:Float = 1, easeFunc:EaseFunction, player:Int = -1, field:Int = -1) {
+        Manager.instance.add(name, beat, length, value, easeFunc, player, field);
+    }
+
+    public static function setAdd(name:String, beat:Float, value:Float, player:Int = -1, field:Int = -1) {
+        Manager.instance.setAdd(name, beat, value, player, field);
+    }
+
+    public static function repeater(beat:Float, length:Float, callback:Dynamic->Void, field:Int = -1) {
+        Manager.instance.repeater(beat, length, callback, field);
+    }
+
+    public static function callback(beat:Float, callback:Dynamic->Void, field:Int = -1) {
+        Manager.instance.callback(beat, callback, field);
+    }
+
+    public static function node(input:Array<String>, output:Array<String>, func:Dynamic->Void, field:Int = -1) {
+        Manager.instance.node(input, output, func, field);
+    }
+
+    public static function alias(name:String, alias:String, field:Int) {
+        Manager.instance.alias(name, alias, field);
     }
 }
