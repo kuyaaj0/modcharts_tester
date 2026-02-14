@@ -35,11 +35,20 @@ class Psych implements IAdapter {
 		__fCrochet = (Conductor.crochet + 8) / 4;
 	}
 
-	private function setupLuaFunctions() {
 		#if LUA_ALLOWED
-		// todo
-		#end
-	}
+private function setupLuaFunctions() {
+    if (PlayState.instance != null && PlayState.instance.luaArray != null) {
+        for (lua in PlayState.instance.luaArray) {
+            try {
+                // Hard-coded call that links the Lua env to the manager
+                modchart.ManagerLua.register(lua);
+            } catch (e) {
+                trace('[FunkinModchart Psych Adapter] Failed to register Lua bridge: ' + e);
+            }
+        }
+    }
+}
+#end
 
 	public function isTapNote(sprite:FlxSprite) {
 		return sprite is Note;
