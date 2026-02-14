@@ -1,62 +1,74 @@
-package modchart.engine;
+package modchart;
 
 import haxe.ds.StringMap;
-import modchart.backend.math.Vector3;
+import modchart.backend.math.Vector3; // ✅ Correct import
 import modchart.backend.core.VisualParameters;
 import modchart.backend.core.ModifierParameters;
 
+/**
+ * ManagerLua is the bridge between Lua scripts and the modchart system.
+ * It allows Lua to register custom modifiers that affect arrow positions
+ * and visuals during gameplay.
+ */
 class ManagerLua {
-    // Store Lua function references by name
-    public static var luaFunctions:StringMap<Dynamic> = new StringMap();
+    // Stores Lua modifier functions
+    private static var luaRenderFuncs:StringMap<Dynamic> = new StringMap();
+    private static var luaVisualFuncs:StringMap<Dynamic> = new StringMap();
 
     /**
-     * Registers a Lua function by name.
-     * @param name - Function name to call later
-     * @param func - The Lua function reference
+     * Register a Lua table containing 'render' and/or 'visuals' functions.
+     * The table must have a unique 'name' key for identification.
      */
-    public static function registerFunction(name:String, func:Dynamic):Void {
-        luaFunctions.set(name, func);
+    public static function register(luaTable:Dynamic) {
+        if (luaTable.name == null) {
+            trace("[ManagerLua] Lua table missing 'name' property!");
+            return;
+        }
+
+        final name:String = luaTable.name;
+
+        if (luaTable.render != null)
+            luaRenderFuncs.set(name, luaTable.render);
+
+        if (luaTable.visuals != null)
+            luaVisualFuncs.set(name, luaTable.visuals);
+
+        trace("[ManagerLua] Registered Lua modifier: " + name);
     }
 
     /**
-     * Calls a Lua function that returns a Vector3 for render.
+     * Call the Lua render function if it exists.
      */
-    public static function callVector3(name:String, pos:Vector3, params:ModifierParameters):Vector3 {
-        if (!luaFunctions.exists(name)) return null;
-        var func = luaFunctions.get(name);
+    public static function runRender(name:String, pos:Vector3, params:ModifierParameters):Vector3 {
+        final func = luaRenderFuncs.get(name);
+        if (func == null) return pos;
+
         try {
-            // Call the Lua function
-            var result:Dynamic = func(pos, params);
-            if (result == null) return null;
-            
-            // Convert result back to Vector3
-            return cast result;
+            final result:Dynamic = func({x: pos.x, y: pos.y, z: pos.z}, params);
+            if (result == null) return pos;
+
+            return new Vector3(result.x, result.y, result.z);
         } catch (e:Dynamic) {
-            trace('[ManagerLua] Error calling Lua render function $name: $e');
-            return null;
+            trace("[ManagerLua] Error in Lua render '" + name + "': " + e);
+            return pos;
         }
     }
 
     /**
-     * Calls a Lua function that returns VisualParameters for visuals.
+     * Call the Lua visuals function if it exists.
      */
-    public static function callVisuals(name:String, visuals:VisualParameters, params:ModifierParameters):VisualParameters {
-        if (!luaFunctions.exists(name)) return null;
-        var func = luaFunctions.get(name);
-        try {
-            var result:Dynamic = func(visuals, params);
-            if (result == null) return null;
-            return cast result;
-        } catch (e:Dynamic) {
-            trace('[ManagerLua] Error calling Lua visuals function $name: $e');
-            return null;
-        }
-    }
+    public static function runVisuals(name:String, visuals:VisualParameters, params:ModifierParameters):VisualParameters {
+        final func = luaVisualFuncs.get(name);
+        if (func == null) return visuals;
 
-    /**
-     * Optional: Clear all Lua functions
-     */
-    public static function clear():Void {
-        luaFunctions = new StringMap();
+        try {
+            final result:Dynamic = func(visuals, params);
+            if (result == null) return visuals;
+
+            return result;
+        } catch (e:Dynamic) {
+            trace("[ManagerLua] Error in Lua visuals '" + name + "': " + e);
+            return visuals;
+        }
     }
 }
