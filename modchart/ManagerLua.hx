@@ -68,32 +68,32 @@ class ManagerLua {
      * Run a Lua visuals function if registered.
      */
     public static function runVisuals(name:String, visuals:VisualParameters, params:ModifierParameters):VisualParameters {
-        final func = luaVisualFuncs.get(name);
-        if (func == null) return visuals;
+    final func = luaVisualFuncs.get(name);
+    if (func == null) return visuals;
 
-        try {
-            final result:Dynamic = func(visuals, params);
-            if (result == null) return visuals;
+    try {
+        final result:Dynamic = func(visuals, params);
+        if (result == null) return visuals;
 
-            return new VisualParameters(
-                scaleX: result.scaleX != null ? result.scaleX : visuals.scaleX,
-                scaleY: result.scaleY != null ? result.scaleY : visuals.scaleY,
-                alpha:  result.alpha  != null ? result.alpha  : visuals.alpha,
-                glow:   result.glow   != null ? result.glow   : visuals.glow,
-                glowR:  result.glowR  != null ? result.glowR  : visuals.glowR,
-                glowG:  result.glowG  != null ? result.glowG  : visuals.glowG,
-                glowB:  result.glowB  != null ? result.glowB  : visuals.glowB,
-                angleX: result.angleX != null ? result.angleX : visuals.angleX,
-                angleY: result.angleY != null ? result.angleY : visuals.angleY,
-                angleZ: result.angleZ != null ? result.angleZ : visuals.angleZ,
-                skewX:  result.skewX  != null ? result.skewX  : visuals.skewX,
-                skewY:  result.skewY  != null ? result.skewY  : visuals.skewY
-            );
-        } catch (e:Dynamic) {
-            trace("[ManagerLua] Error in Lua visuals '" + name + "': " + e);
-            return visuals;
-        }
+        return {
+            scaleX: result.scaleX != null ? result.scaleX : visuals.scaleX,
+            scaleY: result.scaleY != null ? result.scaleY : visuals.scaleY,
+            alpha:  result.alpha  != null ? result.alpha  : visuals.alpha,
+            glow:   result.glow   != null ? result.glow   : visuals.glow,
+            glowR:  result.glowR  != null ? result.glowR  : visuals.glowR,
+            glowG:  result.glowG  != null ? result.glowG  : visuals.glowG,
+            glowB:  result.glowB  != null ? result.glowB  : visuals.glowB,
+            angleX: result.angleX != null ? result.angleX : visuals.angleX,
+            angleY: result.angleY != null ? result.angleY : visuals.angleY,
+            angleZ: result.angleZ != null ? result.angleZ : visuals.angleZ,
+            skewX:  result.skewX  != null ? result.skewX  : visuals.skewX,
+            skewY:  result.skewY  != null ? result.skewY  : visuals.skewY
+        };
+    } catch (e:Dynamic) {
+        trace("[ManagerLua] Error in Lua visuals '" + name + "': " + e);
+        return visuals;
     }
+}
 
     /**
      * Wrap a Lua modifier into a DynamicModifier and register it to Manager.
