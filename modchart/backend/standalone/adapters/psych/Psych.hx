@@ -3,10 +3,10 @@ package modchart.backend.standalone.adapters.psych;
 #if (FM_ENGINE_VERSION == "1.0" || FM_ENGINE_VERSION == "0.7")
 import backend.ClientPrefs;
 import backend.Conductor;
-import game.funkin.objects.Note;
-import game.funkin.objects.NoteSplash;
-import game.funkin.objects.StrumNote as Strum;
-import game.funkin.PlayState;
+import games.funkin.objects.Note;
+import games.funkin.objects.NoteSplash;
+import games.funkin.objects.StrumNote as Strum;
+import games.funkin.PlayState;
 #else
 import ClientPrefs;
 import Conductor;
