@@ -102,20 +102,78 @@ class ManagerLua {
     // Utility / Ease Functions
     // -------------------------------
 
-    private static function getEaseByString(easeName:String):EaseFunction {
-        return switch(easeName.toLowerCase()) {
-            case "sinein": FlxEase.sineIn;
-            case "sineout": FlxEase.sineOut;
-            case "sineinout": FlxEase.sineInOut;
-            case "quadin": FlxEase.quadIn;
-            case "quadout": FlxEase.quadOut;
-            case "quadinout": FlxEase.quadInOut;
-            case "cubicin": FlxEase.cubicIn;
-            case "cubicout": FlxEase.cubicOut;
-            case "cubicinout": FlxEase.cubicInOut;
-            default: FlxEase.linear;
-        }
+    // -------------------------------
+// Utility / Ease Functions
+// -------------------------------
+private static function getEaseByString(easeName:String) {
+    if (easeName == null) return FlxEase.linear;
+    switch (easeName.toLowerCase().trim()) {
+        case "backin": return FlxEase.backIn;
+        case "backinout": return FlxEase.backInOut;
+        case "backout": return FlxEase.backOut;
+
+        case "bouncein": return FlxEase.bounceIn;
+        case "bounceinout": return FlxEase.bounceInOut;
+        case "bounceout": return FlxEase.bounceOut;
+
+        case "circin": return FlxEase.circIn;
+        case "circinout": return FlxEase.circInOut;
+        case "circout": return FlxEase.circOut;
+
+        case "cubein": return FlxEase.cubeIn;
+        case "cubeinout": return FlxEase.cubeInOut;
+        case "cubeout": return FlxEase.cubeOut;
+
+        // common synonyms
+        case "cubicin": return FlxEase.cubeIn;
+        case "cubicinout": return FlxEase.cubeInOut;
+        case "cubicout": return FlxEase.cubeOut;
+
+        case "elasticin": return FlxEase.elasticIn;
+        case "elasticinout": return FlxEase.elasticInOut;
+        case "elasticout": return FlxEase.elasticOut;
+
+        case "expoin": return FlxEase.expoIn;
+        case "expoinout": return FlxEase.expoInOut;
+        case "expoout": return FlxEase.expoOut;
+
+        case "quadin": return FlxEase.quadIn;
+        case "quadinout": return FlxEase.quadInOut;
+        case "quadout": return FlxEase.quadOut;
+
+        case "quartin": return FlxEase.quartIn;
+        case "quartinout": return FlxEase.quartInOut;
+        case "quartout": return FlxEase.quartOut;
+
+        case "quintin": return FlxEase.quintIn;
+        case "quintinout": return FlxEase.quintInOut;
+        case "quintout": return FlxEase.quintOut;
+
+        case "sinein": return FlxEase.sineIn;
+        case "sineinout": return FlxEase.sineInOut;
+        case "sineout": return FlxEase.sineOut;
+
+        case "smoothstepin": return FlxEase.smoothStepIn;
+        case "smoothstepinout": return FlxEase.smoothStepInOut;
+        case "smoothstepout": return FlxEase.smoothStepOut;
+
+        case "smootherstepin": return FlxEase.smootherStepIn;
+        case "smootherstepinout": return FlxEase.smootherStepInOut;
+        case "smootherstepout": return FlxEase.smootherStepOut;
+
+        // explicit linear fallback names
+        case "linear": return FlxEase.linear;
+        case "none": return FlxEase.linear;
+
+        default:
+            // last-resort attempt: try to pick FlxEase by simple heuristics
+            // (e.g., allow "sine" -> sineInOut)
+            if (easeName.toLowerCase().contains("sine")) return FlxEase.sineInOut;
+            if (easeName.toLowerCase().contains("quad")) return FlxEase.quadInOut;
+            if (easeName.toLowerCase().contains("cube") || easeName.toLowerCase().contains("cubic")) return FlxEase.cubeInOut;
+            return FlxEase.linear;
     }
+}
 
     public static function ease(name:String, beat:Float, length:Float, value:Float = 1, easeName:String = "linear", player:Int = -1, field:Int = -1):Void {
         var easeFunc = getEaseByString(easeName);
