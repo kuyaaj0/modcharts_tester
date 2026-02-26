@@ -8,6 +8,7 @@ import modchart.engine.modifiers.DynamicModifier;
 import modchart.engine.events.Event;
 import flixel.tweens.FlxEase;
 import modchart.engine.PlayField;
+using StringTools;
 
 /**
  * ManagerLua - Lua ↔ Haxe bridge for FunkinModchart
@@ -107,7 +108,7 @@ class ManagerLua {
 // -------------------------------
 private static function getEaseByString(easeName:String) {
     if (easeName == null) return FlxEase.linear;
-    switch (easeName.toLowerCase().trim()) {
+    switch (StringTools.trim(easeName.toLowerCase())) {
         case "backin": return FlxEase.backIn;
         case "backinout": return FlxEase.backInOut;
         case "backout": return FlxEase.backOut;
